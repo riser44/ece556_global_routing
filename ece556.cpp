@@ -372,7 +372,7 @@ void calculateNetOrdering(routingInst *rst) {
     }
 
     // BubbleSort the NetArray so the largest cost is at the front
-    int holder = sizeof(rst->nets);///sizeof(rst->nets[0]);
+    int holder = sizeof(rst->nets)/sizeof(rst->nets[0]);
     int y, z;
 
     for(y = 0; y < holder - 1; y++) {
