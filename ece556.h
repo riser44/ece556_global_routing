@@ -6,90 +6,89 @@
 
 #include <stdio.h>
 
-/**
- * A structure to represent a 2D Point.
- */
-typedef struct
-{
-    int x ; /* x coordinate ( >=0 in the routing grid)*/
-    int y ; /* y coordinate ( >=0 in the routing grid)*/
+ /**
+  * A structure to represent a 2D Point. 
+  */
+ typedef struct
+ {
+   int x ; /* x coordinate ( >=0 in the routing grid)*/
+   int y ; /* y coordinate ( >=0 in the routing grid)*/
 
-} point ;
-
-
-/**
-* A structure to represent a segment
-*/
-typedef struct
-{
-    point p1 ; 	/* start point of a segment */
-    point p2 ; 	/* end point of a segment */
-
-    int numEdges ; 	/* number of edges in the segment*/
-    int *edges ;  	/* array of edges representing the segment*/
-
-} segment ;
+ } point ;
 
 
-/**
-* A structure to represent a route
-*/
-typedef struct
-{
+  /**
+  * A structure to represent a segment
+  */
+ typedef struct
+ {
+   point p1 ; 	/* start point of a segment */
+   point p2 ; 	/* end point of a segment */
+   
+   int numEdges ; 	/* number of edges in the segment*/
+   int *edges ;  	/* array of edges representing the segment*/
+   
+ } segment ;
+ 
+ 
+  /**
+  * A structure to represent a route
+  */
+  typedef struct
+  {
     int numSegs ;  	/* number of segments in a route*/
     segment *segments ;  /* an array of segments (note, a segment may be flat, L-shaped or any other shape, based on your preference */
 
-} route ;
+  } route ;
+ 
+ 
+  /**
+  * A structure to represent nets
+  */
+  typedef struct
+  {
 
+   int id ; 		/* ID of the net */
+   int numPins ; 		/* number of pins (or terminals) of the net */
+   int cost;
+   point *pins ; 		/* array of pins (or terminals) of the net. */
+   route nroute ;		/* stored route for the net. */
 
-/**
-* A structure to represent nets
-*/
+  } net ;
+  
+  /**
+  * A structure to represent the routing instance
+  */
+  typedef struct
+  {
+   int gx ;		/* x dimension of the global routing grid */
+   int gy ;		/* y dimension of the global routing grid */
+   
+   int cap ;
+   
+   int numNets ;	/* number of nets */
+   net *nets ;		/* array of nets */
+   
+   int numEdges ; 	/* number of edges of the grid */
+   int *edgeCaps; 	/* array of the actual edge capacities after considering for blockages */
+   int *edgeUtils;	/* array of edge utilizations */  
+   
+  } routingInst ;
+  
 typedef struct
 {
-
-    int id ; 			/* ID of the net */
-    int numPins ; 		/* number of pins (or terminals) of the net */
-    int cost ;			/* the cost of the net for net ordering */
-    point *pins ; 		/* array of pins (or terminals) of the net. */
-    route nroute ;		/* stored route for the net. */
-
-} net ;
-
-/**
-* A structure to represent the routing instance
-*/
-typedef struct
-{
-    int gx ;		/* x dimension of the global routing grid */
-    int gy ;		/* y dimension of the global routing grid */
-
-    int cap ;
-
-    int numNets ;	/* number of nets */
-    net *nets ;		/* array of nets */
-
-    int numEdges ; 	/* number of edges of the grid */
-    int *edgeCaps; 	/* array of the actual edge capacities after considering for blockages */
-    int *edgeUtils;	/* array of edge utilizations */
-
-} routingInst ;
+	int prev_x;
+	int prev_y;
+	int curr_x;
+	int curr_y;
+	int CostSoFar;
+} node_inst ;
 
 typedef struct
 {
-    int parentX;
-    int parentY;
-    int currNodeX;
-    int currNodeY;
-    int sumOfWeights;
-} dijkPair ;
-
-typedef struct
-{
-    int front, rear, size;
-    unsigned capacity;
-    dijkPair* array;
-} Queue ;
+	int head, tail, size, capacity;
+	node_inst* nodes;
+} queue_inst ;
 
 /* int readBenchmark(const char *fileName, routingInst *rst)
    Read in the benchmark file and initialize the routing instance.
@@ -98,18 +97,30 @@ typedef struct
    input2: pointer to the routing instance
    output: 1 if successful
 */
+char* extractIntFromString(char* input);
+
 int readBenchmark(const char *fileName, routingInst *rst);
 
-
+  
 /* int solveRouting(routingInst *rst)
    This function creates a routing solution
    input: pointer to the routing instance
-   output: 1 if successful, 0 otherwise (e.g. the data structures are not populated)
+   output: 1 if successful, 0 otherwise (e.g. the data structures are not populated) 
 */
-int solveRouting(routingInst *rst, int d, int n);
 
+//Check if below definitions are needed
+void netDecomposition(routingInst *rst);
+
+void ComputeEdgeWeight_NetOrdering(routingInst *rst);
+
+void RipUp(routingInst *rst, int net_number);
+
+//void reroute(routingInst *rst, int net_id);
+
+int solveRouting(routingInst *rst, int d, int n);
+  
 /* int writeOutput(const char *outRouteFile, routingInst *rst)
-   Write the routing solution obtained from solveRouting().
+   Write the routing solution obtained from solveRouting(). 
    Refer to the project link for the required output format.
 
    Finally, make sure your generated output file passes the evaluation script to make sure
@@ -118,29 +129,21 @@ int solveRouting(routingInst *rst, int d, int n);
 
    input1: name of the output file
    input2: pointer to the routing instance
-   output: 1 if successful, 0 otherwise
+   output: 1 if successful, 0 otherwise 
   */
-int writeOutput(const char *outRouteFile, routingInst *rst);
+  int writeOutput(const char *outRouteFile, routingInst *rst);
+  
+  /* int release(routingInst *rst)
+     Release the memory for all the allocated data structures. 
+     Failure to release may cause memory problems after multiple runs of your program. 
+     Need to recursively delete all memory allocations from bottom to top 
+     (starting from segments then routes then individual fields within a net struct, 
+     then nets, then the fields in a routing instance, and finally the routing instance)
 
-/* int release(routingInst *rst)
-   Release the memory for all the allocated data structures.
-   Failure to release may cause memory problems after multiple runs of your program.
-   Need to recursively delete all memory allocations from bottom to top
-   (starting from segments then routes then individual fields within a net struct,
-   then nets, then the fields in a routing instance, and finally the routing instance)
-
-   output: 1 if successful, 0 otherwise
-*/
-int release(routingInst *rst);
-
-
-void netDecomposition(routingInst *rst);
-
-void ripUp(routingInst *rst, int netNumber);
-
-char* extractIntFromString(char* input);
-
-
+     output: 1 if successful, 0 otherwise 
+  */
+ int release(routingInst *rst);
 
 
 #endif // ECE556_H
+
