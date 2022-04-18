@@ -211,7 +211,10 @@ int readBenchmark(const char *fileName, routingInst *rst){
 		}
 	}
 //END
-	
+  delete [] line;	
+  delete [] block_x;	
+  delete [] block_y;	
+  delete [] new_cap;	
   return 1;
 }
 
@@ -748,12 +751,16 @@ void reroute(routingInst *rst, int net_id)
 							}
 						}
 					}
+				delete adjacent_node;
 				}
 				//Push the node extracted and processed into Q3
 				enqueue(Q3, *min_node);
 			}
 		//printf("Q2 size %d\n", Q2->size);
 		}
+	delete source_node;
+	delete Q3;
+	delete Q2;
 	}
 }
 
